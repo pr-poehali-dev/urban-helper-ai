@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 
+const CityMap = lazy(() => import('@/components/CityMap'));
+
 interface Issue {
   id: number;
   title: string;
@@ -19,6 +21,8 @@ interface Issue {
   status: 'pending' | 'in-progress' | 'resolved';
   votes: number;
   location: string;
+  lat: number;
+  lng: number;
   imageUrl?: string;
   date: string;
 }
@@ -33,6 +37,8 @@ const Index = () => {
       status: 'in-progress',
       votes: 124,
       location: 'ул. Ленина, 45',
+      lat: 55.7558,
+      lng: 37.6173,
       date: '2026-01-10'
     },
     {
@@ -43,6 +49,8 @@ const Index = () => {
       status: 'pending',
       votes: 89,
       location: 'Центральный парк',
+      lat: 55.7520,
+      lng: 37.6156,
       date: '2026-01-12'
     },
     {
@@ -53,6 +61,8 @@ const Index = () => {
       status: 'resolved',
       votes: 67,
       location: 'ул. Мира, двор 12',
+      lat: 55.7600,
+      lng: 37.6200,
       date: '2026-01-08'
     },
     {
@@ -63,6 +73,8 @@ const Index = () => {
       status: 'pending',
       votes: 45,
       location: 'пр. Победы, 78',
+      lat: 55.7490,
+      lng: 37.6100,
       date: '2026-01-13'
     }
   ]);
@@ -111,6 +123,8 @@ const Index = () => {
       status: 'pending',
       votes: 0,
       location: newIssue.location,
+      lat: 55.7558 + (Math.random() - 0.5) * 0.02,
+      lng: 37.6173 + (Math.random() - 0.5) * 0.02,
       imageUrl: imagePreview,
       date: new Date().toISOString().split('T')[0]
     };
@@ -399,35 +413,23 @@ const Index = () => {
 
           <TabsContent value="map" className="animate-fade-in">
             <Card className="bg-white/80 backdrop-blur-sm">
-              <CardContent className="p-8">
-                <div className="aspect-video bg-gradient-to-br from-green-100 to-blue-100 rounded-lg flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute inset-0 opacity-20">
-                    {[...Array(20)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="absolute w-2 h-2 bg-green-500 rounded-full animate-pulse"
-                        style={{
-                          left: `${Math.random() * 100}%`,
-                          top: `${Math.random() * 100}%`,
-                          animationDelay: `${Math.random() * 2}s`
-                        }}
-                      />
-                    ))}
+              <CardHeader>
+                <CardTitle>Интерактивная карта города</CardTitle>
+                <CardDescription>
+                  Все проблемные места на карте. Нажмите на маркер для подробностей
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Suspense fallback={
+                  <div className="w-full h-[600px] bg-gradient-to-br from-green-100 to-blue-100 rounded-lg flex items-center justify-center">
+                    <div className="text-center">
+                      <Icon name="Loader" size={48} className="text-green-600 mx-auto mb-4 animate-spin" />
+                      <p className="text-gray-600">Загрузка карты...</p>
+                    </div>
                   </div>
-                  <div className="text-center z-10">
-                    <Icon name="Map" size={64} className="text-green-600 mx-auto mb-4" />
-                    <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                      Интерактивная карта города
-                    </h3>
-                    <p className="text-gray-600">
-                      Здесь будет отображаться карта с проблемными местами
-                    </p>
-                    <Button className="mt-6 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600">
-                      <Icon name="Navigation" size={18} className="mr-2" />
-                      Открыть карту
-                    </Button>
-                  </div>
-                </div>
+                }>
+                  <CityMap issues={issues} onVote={handleVote} />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
