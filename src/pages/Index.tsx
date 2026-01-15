@@ -71,8 +71,24 @@ const Index = () => {
     title: '',
     description: '',
     category: '',
-    location: ''
+    location: '',
+    imageUrl: ''
   });
+
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleVote = (id: number) => {
     setIssues(issues.map(issue => 
@@ -95,11 +111,14 @@ const Index = () => {
       status: 'pending',
       votes: 0,
       location: newIssue.location,
+      imageUrl: imagePreview,
       date: new Date().toISOString().split('T')[0]
     };
 
     setIssues([issue, ...issues]);
-    setNewIssue({ title: '', description: '', category: '', location: '' });
+    setNewIssue({ title: '', description: '', category: '', location: '', imageUrl: '' });
+    setSelectedImage(null);
+    setImagePreview('');
     toast.success('Предложение успешно отправлено!');
   };
 
@@ -186,6 +205,38 @@ const Index = () => {
                       value={newIssue.description}
                       onChange={(e) => setNewIssue({ ...newIssue, description: e.target.value })}
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor="image">Фотография проблемы</Label>
+                    <div className="mt-2">
+                      <Input
+                        id="image"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="cursor-pointer"
+                      />
+                      {imagePreview && (
+                        <div className="mt-3 relative">
+                          <img 
+                            src={imagePreview} 
+                            alt="Preview" 
+                            className="w-full h-48 object-cover rounded-lg border-2 border-green-200"
+                          />
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2"
+                            onClick={() => {
+                              setSelectedImage(null);
+                              setImagePreview('');
+                            }}
+                          >
+                            <Icon name="X" size={16} />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <Button 
                     onClick={handleSubmitIssue}
@@ -311,6 +362,15 @@ const Index = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
+                  {issue.imageUrl && (
+                    <div className="mb-4">
+                      <img 
+                        src={issue.imageUrl} 
+                        alt={issue.title}
+                        className="w-full h-64 object-cover rounded-lg border border-gray-200"
+                      />
+                    </div>
+                  )}
                   <p className="text-gray-700 mb-4">{issue.description}</p>
                   <div className="flex items-center justify-between text-sm text-gray-500">
                     <div className="flex items-center gap-4">
@@ -318,6 +378,12 @@ const Index = () => {
                         <Icon name="Calendar" size={14} />
                         {new Date(issue.date).toLocaleDateString('ru-RU')}
                       </span>
+                      {issue.imageUrl && (
+                        <span className="flex items-center gap-1 text-green-600">
+                          <Icon name="Camera" size={14} />
+                          Фото
+                        </span>
+                      )}
                     </div>
                     {issue.status === 'resolved' && (
                       <span className="flex items-center gap-1 text-green-600 font-medium">
